@@ -2,15 +2,18 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
+import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_default";
 
-export async function registro(req: Request, res: Response) {
+export async function register(req: Request, res: Response) {
   const { name, email, password } = req.body;
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return res.status(400).json({ message: "Email já cadastrado." });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email já cadastrado." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
@@ -19,6 +22,7 @@ export async function registro(req: Request, res: Response) {
 
     return res.status(201).json({ message: "Usuário criado com sucesso!", userId: user.id });
   } catch (error) {
+    console.error(error); 
     return res.status(500).json({ message: "Erro no servidor." });
   }
 }
@@ -62,5 +66,26 @@ export async function forgotPassword(req: Request, res: Response) {
     return res.status(200).json({ message: "Senha atualizada com sucesso." });
   } catch (error) {
     return res.status(500).json({ message: "Erro no servidor." });
+  }
+}
+
+export async function profile(req: AuthenticatedRequest, res: Response) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
+
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao buscar perfil." });
   }
 }

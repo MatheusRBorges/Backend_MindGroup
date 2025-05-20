@@ -1,13 +1,16 @@
+import { authenticateToken } from "../middlewares/authMiddleware";
 import { Router } from "express";
-import { registro, login, forgotPassword } from "../controllers/auth.controller";
+import { register, login, forgotPassword } from "../controllers/auth.controller";
+import { profile } from "../controllers/auth.controller";
 
 
 const router = Router();
 
 
-router.post("/registro", registro);
+router.post("/register", register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 
+router.get("/profile", authenticateToken, profile);
 
 export default router;
