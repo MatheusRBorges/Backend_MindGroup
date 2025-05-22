@@ -5,10 +5,13 @@ export interface AuthenticatedRequest extends Request {
   userId?: number;
 }
 
-export function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export function authenticateToken(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
   const authHeader = req.headers.authorization;
-
-  const token = authHeader?.split(" ")[1]; 
+  const token = authHeader?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "Token não fornecido." });
@@ -19,6 +22,6 @@ export function authenticateToken(req: AuthenticatedRequest, res: Response, next
     req.userId = decoded.userId;
     next();
   } catch (err) {
-    return res.status(403).json({ message: "Token inválido." });
+    return res.status(403).json({ message: "Token inválido ou expirado." });
   }
 }

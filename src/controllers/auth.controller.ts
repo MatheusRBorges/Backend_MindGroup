@@ -11,18 +11,21 @@ export async function register(req: Request, res: Response) {
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
+
     if (existingUser) {
       return res.status(400).json({ message: "Email já cadastrado." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
       data: { name, email, password: hashedPassword },
+      select: { id: true, name: true, email: true },
     });
 
-    return res.status(201).json({ message: "Usuário criado com sucesso!", userId: user.id });
+    return res.status(201).json({ message: "Usuário criado com sucesso!", user });
   } catch (error) {
-    console.error(error); 
+    console.error("Erro no register:", error);
     return res.status(500).json({ message: "Erro no servidor." });
   }
 }
@@ -32,9 +35,11 @@ export async function login(req: Request, res: Response) {
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
+
     if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
 
     const passwordMatch = await bcrypt.compare(password, user.password);
+
     if (!passwordMatch) return res.status(401).json({ message: "Senha incorreta." });
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "2d" });
@@ -44,7 +49,8 @@ export async function login(req: Request, res: Response) {
       token,
       user: { id: user.id, name: user.name, email: user.email },
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Erro no login:", err);
     return res.status(500).json({ message: "Erro no servidor." });
   }
 }
@@ -54,6 +60,7 @@ export async function forgotPassword(req: Request, res: Response) {
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
+
     if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -65,6 +72,7 @@ export async function forgotPassword(req: Request, res: Response) {
 
     return res.status(200).json({ message: "Senha atualizada com sucesso." });
   } catch (error) {
+    console.error("Erro em forgotPassword:", error);
     return res.status(500).json({ message: "Erro no servidor." });
   }
 }
@@ -73,19 +81,75 @@ export async function profile(req: AuthenticatedRequest, res: Response) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
+      select: { id: true, name: true, email: true, avatar: true },
     });
 
-    if (!user) {
-      return res.status(404).json({ message: "Usuário não encontrado." });
-    }
+    if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
 
     return res.json(user);
   } catch (error) {
+    console.error("Erro em profile:", error);
     return res.status(500).json({ message: "Erro ao buscar perfil." });
+  }
+}
+
+export async function updateProfile(req: AuthenticatedRequest, res: Response) {
+  const { name, email, password } = req.body;
+
+  try {
+    const updateData: { name: string; email: string; password?: string } = { name, email };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data: updateData,
+      select: { id: true, name: true, email: true },
+    });
+
+    return res.json({ message: "Perfil atualizado com sucesso.", user: updated });
+  } catch (err) {
+    console.error("Erro em updateProfile:", err);
+    return res.status(500).json({ message: "Erro ao atualizar perfil." });
+  }
+}
+
+export async function updateAvatar(req: AuthenticatedRequest, res: Response) {
+  const { avatar } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { avatar },
+      select: { id: true, name: true, email: true, avatar: true },
+    });
+
+    return res.json({ message: "Avatar atualizado com sucesso.", user });
+  } catch (err) {
+    console.error("Erro em updateAvatar:", err);
+    return res.status(500).json({ message: "Erro ao atualizar avatar." });
+  }
+}
+
+export async function uploadAvatarFile(req: AuthenticatedRequest, res: Response) {
+  try {
+    const file = req.file;
+    console.log(file);
+
+    if (!file) {
+      return res.status(400).json({ message: "Nenhum arquivo enviado." });
+    }
+
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { avatar: file.filename },
+    });
+
+    return res.json({ message: "Avatar atualizado com sucesso.", avatar: file.filename });
+  } catch (error) {
+    console.error("Erro ao salvar avatar:", error);
+    return res.status(500).json({ message: "Erro ao atualizar avatar." });
   }
 }
