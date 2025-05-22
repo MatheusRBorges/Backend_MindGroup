@@ -27,6 +27,10 @@ export async function createPost(req: AuthenticatedRequest, res: Response) {
       },
     });
 
+    if (!title || title.length > 150 || !content || content.length > 1000) {
+      return res.status(400).json({ message: "Título ou conteúdo excede o limite permitido." });
+    }
+
     return res.status(201).json({ message: "Artigo criado com sucesso.", post });
   } catch (err) {
     console.error("Erro em createPost:", err);

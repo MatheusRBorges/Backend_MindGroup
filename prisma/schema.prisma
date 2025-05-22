@@ -18,6 +18,7 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+
 model Post {
   id          Int      @id @default(autoincrement())
   title       String

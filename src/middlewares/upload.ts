@@ -19,15 +19,16 @@ const storage = multer.diskStorage({
 });
 
 function fileFilter(req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
+  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png"];
+  const allowedExtensions = [".jpg", ".jpeg", ".png"];
   const ext = path.extname(file.originalname).toLowerCase();
-  const mime = file.mimetype;
 
-  if (allowedTypes.test(ext) && mime.startsWith("image/")) {
+  if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error("Apenas arquivos de imagem são permitidos."));
+    cb(new Error("Apenas arquivos JPEG ou PNG são permitidos."));
   }
 }
 
 export const upload = multer({ storage, fileFilter });
+
