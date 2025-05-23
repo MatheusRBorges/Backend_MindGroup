@@ -139,7 +139,8 @@ export async function getMyPosts(req: AuthenticatedRequest, res: Response) {
 
 export async function updatePost(req: AuthenticatedRequest, res: Response) {
   const { id } = req.params;
-  const { title, content, image } = req.body;
+  const { title, content } = req.body;
+  const image = req.file?.filename;
 
   try {
     const post = await prisma.post.findUnique({ where: { id: Number(id) } });
@@ -150,7 +151,11 @@ export async function updatePost(req: AuthenticatedRequest, res: Response) {
 
     const updated = await prisma.post.update({
       where: { id: Number(id) },
-      data: { title, content, image },
+      data: {
+        title,
+        content,
+        ...(image && { image }),
+      },
       select: {
         id: true,
         title: true,

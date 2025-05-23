@@ -134,22 +134,28 @@ export async function updateAvatar(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function uploadAvatarFile(req: AuthenticatedRequest, res: Response) {
+  const userId = req.userId;
+  const avatar = req.file?.filename;
+
+  if (!avatar) {
+    return res.status(400).json({ message: "Nenhum arquivo enviado." });
+  }
+
   try {
-    const file = req.file;
-    console.log(file);
-
-    if (!file) {
-      return res.status(400).json({ message: "Nenhum arquivo enviado." });
-    }
-
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { avatar: file.filename },
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+      },
     });
 
-    return res.json({ message: "Avatar atualizado com sucesso.", avatar: file.filename });
-  } catch (error) {
-    console.error("Erro ao salvar avatar:", error);
+    return res.json({ message: "Avatar atualizado com sucesso.", user });
+  } catch (err) {
+    console.error("Erro ao atualizar avatar:", err);
     return res.status(500).json({ message: "Erro ao atualizar avatar." });
   }
 }
