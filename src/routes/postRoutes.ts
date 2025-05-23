@@ -6,9 +6,9 @@ import { Like, getContarLike, hasUserLiked,} from "../controllers/like.controlle
 
 
 const router = Router();
-router.put("/:id", authenticateToken, upload.single("image"), updatePost);
+router.post("/", authenticateToken, upload.single("image"), createPost);
 router.get("/me", authenticateToken, getMyPosts);
-router.put("/:id", authenticateToken, updatePost);
+router.put("/:id", authenticateToken, upload.single("image"), updatePost);
 router.delete("/:id", authenticateToken, deletePost);
 router.get("/", getAllPosts);
 router.get("/:id", getPostById);

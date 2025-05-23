@@ -9,7 +9,7 @@ export const Like = async (req: AuthenticatedRequest, res: Response) => {
   if (!userId) return res.status(401).json({ message: "Não autenticado." });
 
   try {
-    const existing = await prisma.like.findUnique({
+    const existing = await prisma.Like.findUnique({
       where: {
         userId_postId: {
           userId,
@@ -19,7 +19,7 @@ export const Like = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (existing) {
-      await prisma.like.delete({
+      await prisma.Like.delete({
         where: {
           userId_postId: {
             userId,
@@ -29,7 +29,7 @@ export const Like = async (req: AuthenticatedRequest, res: Response) => {
       });
       return res.json({ liked: false });
     } else {
-      await prisma.like.create({
+      await prisma.Like.create({
         data: {
           userId,
           postId,
@@ -46,7 +46,7 @@ export const getContarLike = async (req: Request, res: Response) => {
   const postId = Number(req.params.id);
 
   try {
-    const count = await prisma.like.count({ where: { postId } });
+    const count = await prisma.Like.count({ where: { postId } });
     return res.json({ count });
   } catch (err) {
     return res.status(500).json({ message: "Erro ao buscar likes." });
@@ -60,7 +60,7 @@ export const hasUserLiked = async (req: AuthenticatedRequest, res: Response) => 
   if (!userId) return res.status(401).json({ message: "Não autenticado." });
 
   try {
-    const like = await prisma.like.findUnique({
+    const like = await prisma.Like.findUnique({
       where: {
         userId_postId: {
           userId,
@@ -84,7 +84,7 @@ export const deletePost = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(403).json({ message: "Acesso negado." });
     }
 
-    await prisma.like.deleteMany({ where: { postId: Number(id) } });
+    await prisma.Like.deleteMany({ where: { postId: Number(id) } });
     await prisma.post.delete({ where: { id: Number(id) } });
 
     return res.json({ message: "Post deletado com sucesso." });
